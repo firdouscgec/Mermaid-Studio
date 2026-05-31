@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mermaid Diagram Editor</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300e5ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='12 2 21 7 21 17 12 22 3 17 3 7'/%3E%3Ccircle cx='12' cy='8' r='1.5' fill='%2300e5ff'/%3E%3Ccircle cx='8' cy='15' r='1.5' fill='%2300e5ff'/%3E%3Ccircle cx='16' cy='15' r='1.5' fill='%2300e5ff'/%3E%3Cline x1='12' y1='8' x2='8' y2='15'/%3E%3Cline x1='12' y1='8' x2='16' y2='15'/%3E%3Cline x1='8' y1='15' x2='16' y2='15'/%3E%3C/svg%3E"/>
+  <!-- Mermaid Core -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.0/mermaid.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+  <!-- Local Styles -->
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<header>
+  <div class="logo-row">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 21 7 21 17 12 22 3 17 3 7" />
+          <circle cx="12" cy="8" r="1.5" fill="currentColor" />
+          <circle cx="8" cy="15" r="1.5" fill="currentColor" />
+          <circle cx="16" cy="15" r="1.5" fill="currentColor" />
+          <line x1="12" y1="8" x2="8" y2="15" />
+          <line x1="12" y1="8" x2="16" y2="15" />
+          <line x1="8" y1="15" x2="16" y2="15" />
+        </svg>
+      </div>
+      <div class="logo-text">Mermaid<span>Studio</span></div>
+    </div>
+    <div class="mobile-toggle-actions">
+      <button class="btn btn-render btn-mobile-quick" onclick="renderDiagram()" title="Compile diagram">▶ Render</button>
+      <button class="btn btn-ghost btn-mobile-toggle" id="mobileControlsBtn" onclick="toggleMobileControls()" title="Toggle controls menu">⚙ Menu</button>
+    </div>
+  </div>
+  <div class="header-groups">
+    <div class="header-group">
+      <div class="group-label">Diagram Settings</div>
+      <div class="group-controls">
+        <select class="theme-select" id="themeSelect" onchange="changeTheme()" title="Switch editor interface theme">
+          <option value="dark">Theme: Dark</option>
+          <option value="default">Theme: Light</option>
+          <option value="forest">Theme: Forest</option>
+          <option value="neutral">Theme: Neutral</option>
+          <option value="base">Theme: Base</option>
+        </select>
+        
+        <select class="theme-select" id="templateSelect" onchange="loadTemplate()" title="Insert template example">
+          <option value="">Insert Template...</option>
+          <option value="flowchart">Flowchart</option>
+          <option value="sequence">Sequence Diagram</option>
+          <option value="state">State Diagram</option>
+          <option value="class">Class Diagram</option>
+          <option value="gantt">Gantt Chart</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="header-divider"></div>
+
+    <div class="header-group">
+      <div class="group-label">Editor Options</div>
+      <div class="group-controls">
+        <label class="toggle-container" title="Render diagram automatically as you type">
+          <input type="checkbox" id="autoRenderToggle" checked>
+          <span class="toggle-label">Auto-Render</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="header-divider"></div>
+
+    <div class="header-group">
+      <div class="group-label">File Settings</div>
+      <div class="group-controls">
+        <input type="text" id="filenameInput" placeholder="diagram-name" class="filename-input" title="Custom Output Filename"/>
+      </div>
+    </div>
+
+    <div class="header-divider"></div>
+
+    <div class="header-group">
+      <div class="group-label">Actions</div>
+      <div class="group-controls">
+        <button class="btn btn-clear" onclick="clearEditor()" title="Clear editor content and name">✕ Clear</button>
+        <button class="btn btn-render" onclick="renderDiagram()" title="Compile diagram (Ctrl+Enter)">▶ Render</button>
+        <div class="dropdown">
+          <button class="btn btn-export" id="exportDropdownBtn" onclick="toggleExportMenu(event)" title="Export options" disabled>Export ▾</button>
+          <div class="dropdown-menu" id="exportMenu">
+            <button onclick="exportSVG()">Export SVG</button>
+            <button onclick="exportPNG()">Export PNG</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="editor-panel">
+    <div class="panel-header">
+      <span>Code Editor <span class="header-meta">| Mermaid (.mmd)</span></span>
+      <span class="panel-tag">editor</span>
+    </div>
+    <textarea id="codeEditor" spellcheck="false" placeholder="Type your Mermaid diagram here...
+
+Example:
+flowchart TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Do Something]
+    B -->|No| D[End]"
+    onkeydown="handleTab(event)"></textarea>
+  </div>
+
+  <div class="preview-panel">
+    <div class="panel-header">
+      <span>Preview <span class="header-meta">| Live Rendered Output</span></span>
+      <span class="panel-tag" id="previewTag">ready</span>
+    </div>
+    <!-- Dismissable Error Banner -->
+    <div class="error-banner" id="errorBanner">
+      <span class="error-banner-text" id="errorBannerText">⚠ Syntax Error: ...</span>
+      <button class="error-banner-close" onclick="dismissError()">✕</button>
+    </div>
+    <div class="preview-area">
+      <!-- Floating Zoom Controls (Left Side) -->
+      <div class="zoom-controls zoom-controls-left">
+        <button onclick="zoomIn()" title="Zoom In">+</button>
+        <button onclick="zoomOut()" title="Zoom Out">−</button>
+        <button onclick="resetZoom()" title="Fit / Reset Zoom">Fit</button>
+      </div>
+      <!-- Floating Copy Controls (Right Side) -->
+      <div class="copy-controls copy-controls-right">
+        <button onclick="copyCode()" title="Copy Editor Code" class="btn-copy">📋 Code</button>
+        <button onclick="copySVG()" title="Copy SVG Source" class="btn-copy">📋 SVG</button>
+      </div>
+      <div id="mermaid-output">
+        <div class="placeholder">
+          <div class="icon">⬡</div>
+          <p>Your diagram will appear here</p>
+          <small>Press ▶ Render or Ctrl+Enter</small>
+        </div>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Waiting for input</span>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<!-- Local JavaScript Logic -->
+<script src="app.js"></script>
+</body>
+</html>
